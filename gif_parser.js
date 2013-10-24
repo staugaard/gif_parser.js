@@ -345,6 +345,7 @@ var parseGIF = function (st, handler) {
 
 
 var GifParser = function () {
+	var canvas, ctx;
 	var stream;
 	var hdr;
 
@@ -354,25 +355,33 @@ var GifParser = function () {
 	var lastDisposalMethod = null;
 
 	var frames = [];
+	var didDraw = false;
 
-	var clear = function () {
+	var clear = function() {
 		transparency = null;
 		delay = null;
 		lastDisposalMethod = disposalMethod;
 		disposalMethod = null;
 	};
 
-	var doParse = function () {
-		parseGIF(stream, handler);
+	var doParse = function(callback) {
+		parseGIF(stream, {
+			hdr: doHdr,
+			gce: doGCE,
+			img: doImg,
+			eof: function() {
+				pushFrame();
+				canvas.width = hdr.width;
+				canvas.height = hdr.height;
+				callback(frames);
+			}
+		});
 	};
 
-	var setSizes = function(w, h) {
-		canvas.width = w;
-		canvas.height = h;
-	}
 	var doHdr = function (_hdr) {
 		hdr = _hdr;
-		setSizes(hdr.width, hdr.height)
+		canvas.width = hdr.width;
+		canvas.height = hdr.height;
 	};
 
 	var doGCE = function (gce) {
@@ -391,8 +400,6 @@ var GifParser = function () {
 			delay: delay
 		});
 	};
-
-	var didDraw = false;
 
 	var doImg = function (img) {
 		//ct = color table, gct = global color table
@@ -429,30 +436,15 @@ var GifParser = function () {
 		didDraw = true;
 	};
 
-	var handler = {
-		hdr: doHdr,
-		gce: doGCE,
-		img: doImg,
-		eof: function (block) {
-			pushFrame();
-			canvas.width = hdr.width;
-			canvas.height = hdr.height;
-			load_callback(frames);
-		}
-	};
-
-	var canvas, ctx;
-	var load_callback;
-
 	return {
 		parse: function(data, callback) {
-			load_callback = callback;
 			frames = [];
 			clear();
 			canvas = document.createElement('canvas');
 			ctx = canvas.getContext('2d');
 			stream = new Stream(data);
-			doParse();
+			didDraw = false;
+			doParse(callback);
 		}
 	};
 
