@@ -352,7 +352,6 @@ var GifParser = function () {
 	var delay = null;
 	var disposalMethod = null;
 	var lastDisposalMethod = null;
-	var frame = null;
 
 	var frames = [];
 
@@ -361,7 +360,6 @@ var GifParser = function () {
 		delay = null;
 		lastDisposalMethod = disposalMethod;
 		disposalMethod = null;
-		frame = null;
 	};
 
 	var doParse = function () {
@@ -387,12 +385,14 @@ var GifParser = function () {
 	};
 
 	var pushFrame = function () {
-		if (!frame) return;
+		if (!didDraw) return;
 		frames.push({
-			data: frame.getImageData(0, 0, hdr.width, hdr.height),
+			data: ctx.getImageData(0, 0, hdr.width, hdr.height),
 			delay: delay
 		});
 	};
+
+	var didDraw = false;
 
 	var doImg = function (img) {
 		//ct = color table, gct = global color table
@@ -426,6 +426,7 @@ var GifParser = function () {
 		});
 
 		ctx.putImageData(cData, img.leftPos, img.topPos);
+		didDraw = true;
 	};
 
 	var handler = {
@@ -440,13 +441,7 @@ var GifParser = function () {
 		}
 	};
 
-	var init = function () {
-		canvas = document.createElement('canvas');
-		ctx = canvas.getContext('2d');
-	};
-
 	var canvas, ctx;
-	var initialized = false;
 	var load_callback;
 
 	return {
