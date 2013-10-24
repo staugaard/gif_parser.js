@@ -344,11 +344,9 @@ var parseGIF = function (st, handler) {
 };
 
 
-var AnimatedGif = function (data) {
+var GifParser = function () {
 	var stream;
 	var hdr;
-
-	var loadError = null;
 
 	var transparency = null;
 	var delay = null;
@@ -356,12 +354,7 @@ var AnimatedGif = function (data) {
 	var lastDisposalMethod = null;
 	var frame = null;
 
-	var playing = true;
-	var forward = true;
-
 	var frames = [];
-
-	var data = data;
 
 	var clear = function () {
 		transparency = null;
@@ -457,12 +450,12 @@ var AnimatedGif = function (data) {
 	var load_callback;
 
 	return {
-		frames: frames,
-		load: function (callback) {
+		parse: function(data, callback) {
 			load_callback = callback;
-
-			if (!initialized ) init();
-
+			frames = [];
+			clear();
+			canvas = document.createElement('canvas');
+			ctx = canvas.getContext('2d');
 			stream = new Stream(data);
 			doParse();
 		}
